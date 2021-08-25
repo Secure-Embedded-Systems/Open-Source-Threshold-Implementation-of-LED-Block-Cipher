@@ -1,3 +1,24 @@
+/***************************************************************************************************/
+/*
+ * Virginia Tech
+ * Secure Embedded Systems Lab
+ *
+ * Copyright (C) 2017 Virginia Tech
+ *
+ * Written in 2017 by Yuan Yao (yuan9@vt.edu), Mo Yang(ymo6@vt.edu)
+ *
+ * This software is distributed under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version. We are in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ */
+ /**************************************************************************************************/
+
 module shift (vrst, rst, clk, rng_out, rd); 
 input vrst,rst, clk, rd; 
 output [7:0] rng_out; 
@@ -26,37 +47,6 @@ assign rng_out = out_tmp[7:0];
       tmp3 = tmp2^(tmp2 << 5);	  
     end 
 
-/*
-always @ (posedge clk) 
-begin
-   if (~vrst | rst | cnt_rst)
-   begin
-	cnt <= 3'h0;
-	
-   end
-   else begin 
-     if(cnt_en) begin
-	   cnt <= cnt + 3'h1;
-	 end
-   end 
-end
-*/
-/*
-always @ (*) 
-begin
-   if (~vrst | rst | cnt_rst)
-   begin
-	cnt = 3'h0;
-	
-   end
-   else begin 
-     if(cnt_en) begin
-	   cnt = cnt + 3'h1;
-	 end
-   end 
-end
-*/
-
  always @ (posedge clk) 
    if (~vrst)
    begin
@@ -80,28 +70,23 @@ end
      if (rd)
       begin 
 		cnt <= cnt + 1;
-	    //cnt_en <= 1'b1;
-	    //cnt_rst <= 1'b0;
 	    if (cnt == 3'h3) begin
-	      out_tmp <= tmp3;
+	      	out_tmp <= tmp3;
 	    end
 	    if (cnt == 3'h2) begin
-	      //cnt_rst <= 1'b1;
-	      tmp0_reg <= tmp3;
+	      	tmp0_reg <= tmp3;
 	    end
 	    if (cnt == 3'h3) begin
-	      //cnt_rst <= 1'b1;
-		  cnt <= 0;
+		cnt <= 0;
 	    end
 	   if (cnt < 3'h3) begin
-	      out_tmp <= out_tmp >> 8;	   
+	      	out_tmp <= out_tmp >> 8;	   
 	    end
        
      end 
 	 else begin
 		cnt <= cnt;
-   	   //cnt_en <=1'b0;
-	   out_tmp <= tmp3;
+	   	out_tmp <= tmp3;
 	 end
    end
 endmodule
