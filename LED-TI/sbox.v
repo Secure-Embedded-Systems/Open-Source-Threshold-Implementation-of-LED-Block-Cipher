@@ -39,7 +39,6 @@ module sbox
    output [7:0]  nibblesq_8;
    output reg done;
    
-   //reg [ 11:0] nibblesi_12;
    reg [ 11:0] nibblesq_12;
    reg [ 11:0] nibblesq_12_next;
    reg [3:0] y1;
@@ -48,35 +47,27 @@ module sbox
    reg [3:0] y1_next;
    reg [3:0] y2_next;
    reg [3:0] y3_next;
-   //reg [3:0] G;
-   //reg [3:0] G_next;
+
    wire [3:0] n1;
    wire [3:0] n2;
    wire [3:0] n3;
-   //reg [3:0] GG;
-   //reg [3:0] GG_next;
-   
-   //assign n1[3:0] = nibblesi_12[3:0];
-   //assign n2[3:0] = nibblesi_12[7:4];
-   //assign n3[3:0] = nibblesi_12[11:8];
+
    assign n1[3:0] = mask[3:0] ^ mask[7:4]; // m3 xor m4
    assign n2[3:0] = nibblesi_8[7:4] ^ mask[7:4];
    assign n3[3:0] = nibblesi_8[3:0] ^ mask[3:0];
-   //assign nibblesq_8[7:4] = done? nibblesq_12[11:8]:4'b0;
-   //assign nibblesq_8[3:0] = done? (nibblesq_12[7:4] ^ nibblesq_12[3:0]): 4'b0 ;
+
    assign nibblesq_8[7:4] = nibblesq_12[11:8];
    assign nibblesq_8[3:0] = nibblesq_12[7:4] ^ nibblesq_12[3:0];
 
-	//reg [3:0] 	 cmd;
 	parameter STATE_IDLE = 4'h0;
 	parameter STATE_SBOXG = 4'h1;
 	parameter STATE_SBOXF = 4'h2;
 	parameter STATE_FINISH = 4'h3;
 	reg [3:0] 	 ctlstate, ctlstate_next;
    
-	//assign done = (ctlstate == STATE_IDLE);
 
-	function [3:0] G1;  //call: G1({n2[3:0],n3[3:0]})
+
+	function [3:0] G1;  
 	input [7:0] G1input;
 	begin
 		G1[3] = G1input[6]^G1input[5]^G1input[4]; //g13 = y2+z2+w2
@@ -145,8 +136,7 @@ module sbox
 		y1 <= 4'h0;
 		y2 <= 4'h0;
 		y3 <= 4'h0;
-		//nibbleo <= 4'h0;
-		//G = 4'h0;
+
 		done <= 0;
 	end
 	else
@@ -156,8 +146,7 @@ module sbox
 		y1 <= y1_next;
 		y2 <= y2_next;
 		y3 <= y3_next; 
-		//nibbleo <= nibbleo_next;
-		//GG <= GG_next;
+
 	end
 	
 	// control logic
@@ -170,13 +159,10 @@ module sbox
 	y3_next   = y3;
 	ctlstate_next = ctlstate;
 	nibblesq_12_next = nibblesq_12;
-	//GG_next = GG;
-//	cmd           = CMD_IDLE;
 
 	case (ctlstate)
 		STATE_IDLE:
 		begin
-//			cmd = CMD_IDLE;
 			ctlstate_next = start ? STATE_SBOXG : STATE_IDLE;
 			done = 0;
 		end
@@ -186,17 +172,10 @@ module sbox
 			y1_next = G1({n2[3:0],n3[3:0]});
 			y2_next = G2({n1[3:0],n3[3:0]});
 			y3_next = G3({n1[3:0],n2[3:0]});
-		//	GG_next[3:0] = y1_next^y2_next^y3_next;
 			ctlstate_next = STATE_SBOXF;
 		end
 		STATE_SBOXF:
 		begin
-			//nibblesq_12_next[3:0] = F1({y3[3:0],y2[3:0]});	//s1
-			//nibblesq_12_next[7:4] = F2({y3[3:0],y1[3:0]}); //s2
-			//nibblesq_12_next[11:8] = F3({y2[3:0],y1[3:0]}); //s3
-			//nibblesq_12_next[3:0] = F1({y2[3:0],y3[3:0]});	//s1
-			//nibblesq_12_next[7:4] = F2({y1[3:0],y3[3:0]}); //s2
-			//nibblesq_12_next[11:8] = F3({y1[3:0],y2[3:0]}); //s3
 			nibblesq_12_next[3:0] = F1({y2[3:0],y1[3:0]});	//s1
 			nibblesq_12_next[7:4] = F2({y3[3:0],y1[3:0]}); //s2
 			nibblesq_12_next[11:8] = F3({y3[3:0],y2[3:0]}); //s3			
