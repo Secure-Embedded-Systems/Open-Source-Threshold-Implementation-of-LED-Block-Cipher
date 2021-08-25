@@ -29,7 +29,6 @@
 `define staten(i,j)      state[`k2(i,j)+3:`k2(i,j)]
 `define staten_next(i,j) state_next[`k2(i,j)+3:`k2(i,j)]
 
-// Yuan: add the definition array with 8 bit unit
 
 `define k3(i,j)    (15-(j + 4*i))*8
 `define k4(i,j,k)  (31-(k + 4*j + 16*i))*8
@@ -103,9 +102,7 @@ module led_serial
    parameter CMD_SBOX_CAL = 4'h5;
    parameter CMD_SBOX_SHIFT = 4'h6;
 
-   
-   
-   //parameter CMD_SBOX = 4'h4;
+ 
    parameter CMD_SHIFTROW = 4'h7;
    parameter CMD_MIXCOLCOMPUTE = 4'h8;
    parameter CMD_MIXCOLROTATE = 4'h9;
@@ -115,18 +112,15 @@ module led_serial
 
    parameter STATE_IDLE = 4'h0;
    parameter STATE_LOAD = 4'h1;
-   //Yuan: add the addshare state
+
    parameter STATE_ADDSHARE_NIBBLE = 4'h2;
    parameter STATE_ADDSHARE_KEY = 4'h3;
    parameter STATE_INIT = 4'h4;
-   //Yuan: add the addconstant and sbox state
+
    parameter STATE_ADDCONSTANT= 4'h5;
    parameter STATE_SBOX_CAL= 4'h6;
    parameter STATE_SBOX_SHIFT= 4'h7;
-  // parameter STATE_DUMMY = 4'h2;
-   
-   
-   //parameter STATE_ROUND = 4'h4; //Yuan: remove the state_round --> sbox and addconstant
+  
    parameter STATE_SHIFTROW = 5'h8;
    parameter STATE_MIXCOL0 = 5'h9;
    parameter STATE_MIXCOL1 = 5'hA;
@@ -146,7 +140,7 @@ module led_serial
    reg [4:0] 	 keycount, keycount_next; //Yuan: add keycounter 0->31 
 
  /////////////////////////////////////////////////////////////////// 
- //Mo: Sbox instantiate  2->3 => sbox => 3->2 need three cycles
+ //Sbox instantiate  
  ///////////////////////////////////////////////////////////////////   
    reg sbox_start;
    wire sbox_done;
@@ -154,30 +148,7 @@ module led_serial
    
    sbox s( .clk(clk), .reset(reset), .nibblesi_8(`staten_shared(0,0)), .mask(mask), .start(sbox_start), .nibblesq_8(sbox_out), .done(sbox_done));  //Mo: connect sbox
 
-   
-/////////////////////////////////////////////////////////////////////////////
- /*  function [3:0] sbox;
-      input [3:0] index;
-      case (index)
-	4'h0: sbox = 4'd12;
-	4'h1: sbox = 4'd5;
-	4'h2: sbox = 4'd6;
-	4'h3: sbox = 4'd11;
-	4'h4: sbox = 4'd9;
-	4'h5: sbox = 4'd0;
-	4'h6: sbox = 4'd10;
-	4'h7: sbox = 4'd13;
-	4'h8: sbox = 4'd3;
-	4'h9: sbox = 4'd14;
-	4'ha: sbox = 4'd15;
-	4'hb: sbox = 4'd8;
-	4'hc: sbox = 4'd4;
-	4'hd: sbox = 4'd7;
-	4'he: sbox = 4'd1;
-	4'hf: sbox = 4'd2;
-      endcase // case (index)
-   endfunction*/
-////////////////////////////////////////////////////////////////////////////////
+
    function [7:0] logic_round;
       input [7:0] d;
       input [7:0] k;
@@ -192,25 +163,8 @@ module led_serial
 
    function [7:0] logic_addconst_decode; 
       input [3:0] d;
-      case (d)
-	/*4'h0: logic_addconst_decode = 8<<4 + 8;
-	4'h1: logic_addconst_decode = rc[5:3]<<4 + rc[5:3] ;
-	4'h2: logic_addconst_decode = 0;
-	4'h3: logic_addconst_decode = 0;
-	4'h4: logic_addconst_decode = 9<<4 + 9;
-	4'h5: logic_addconst_decode = rc[2:0]<<4 + rc[2:0] ;
-	4'h6: logic_addconst_decode = 0;
-	4'h7: logic_addconst_decode = 0;
-	4'h8: logic_addconst_decode = 2 <<4 +2;
-	4'h9: logic_addconst_decode = rc[5:3]<<4 + rc[5:3];
-	4'ha: logic_addconst_decode = 0;
-	4'hb: logic_addconst_decode = 0;
-	4'hc: logic_addconst_decode = 3 << 4 + 3;
-	4'hd: logic_addconst_decode = rc[2:0] << 4 + rc[2:0] ;
-	4'he: logic_addconst_decode = 0;
-	4'hf: logic_addconst_decode = 0;*/
-	
-    4'h0: logic_addconst_decode = {4'h8 ^ mask[3:0],mask[3:0]};
+      case (d)	
+    	4'h0: logic_addconst_decode = {4'h8 ^ mask[3:0],mask[3:0]};
 	4'h1: logic_addconst_decode = {{1'b0,rc[5:3]}^mask[3:0],mask[3:0]};
 	4'h2: logic_addconst_decode = {4'h0 ^ mask[3:0],mask[3:0]};
 	4'h3: logic_addconst_decode = {4'h0 ^ mask[3:0],mask[3:0]};
@@ -300,7 +254,7 @@ module led_serial
 	       ctlstate_next = STATE_ADDSHARE_NIBBLE; //Yuan	       
 	    end
 	//////////////////////////////////////////////////////////////////////
-	//  Yuan: add add sharing for nibble
+	//  Yuan: sharing for nibble
 	//////////////////////////////////////////////////////////////////////
 	   STATE_ADDSHARE_NIBBLE:
 	    begin
@@ -353,17 +307,11 @@ module led_serial
 		   sbox_start = 1 ;
 		   ctlstate_next = (sbox_done==1)? STATE_SBOX_SHIFT : STATE_SBOX_CAL;
 	    end
-	///////////////////////////////////////////////////////////////////////////
-	/*  STATE_ROUND:
-	    begin
-	       cmd = CMD_SBOX;
-	       bcount_next = (bcount == 4'hf) ? 4'h0 : (bcount + 1);
-	       ctlstate_next = (bcount == 4'hf) ? STATE_SHIFTROW : STATE_ROUND;	       
-	    end*/
+
 	 STATE_SBOX_SHIFT:
 	     begin
 	       cmd = CMD_SBOX_SHIFT;
-		   sbox_start = 0;  //Mo: add start=0 here
+		   sbox_start = 0;  
 	       bcount_next = (bcount == 4'hf) ? 4'h0 : (bcount + 1);
 	       ctlstate_next = (bcount == 4'hf) ? STATE_SHIFTROW : STATE_SBOX_CAL;	       
 	    end
@@ -449,7 +397,6 @@ module led_serial
 	   	
 	  CMD_ADDSHARE_NIBBLE:
 	      begin
-		  // Yuan: adding shares to the state
 	       `staten_shared_next(3,3) = {`staten(0,0) ^ mask[3:0],mask[3:0]};
 		   
 		   `staten_shared_next(3,2) = `staten_shared(3,3);
@@ -468,8 +415,8 @@ module led_serial
 	       `staten_shared_next(0,1) = `staten_shared(0,2);
 	       `staten_shared_next(0,0) = `staten_shared(0,1);
 		   
-		   `staten_next(3,3) = 4'b0;
-		   `staten_next(3,2) = `staten(3,3);
+	       `staten_next(3,3) = 4'b0;
+	       `staten_next(3,2) = `staten(3,3);
 	       `staten_next(3,1) = `staten(3,2);
 	       `staten_next(3,0) = `staten(3,1);    
 	       `staten_next(2,3) = `staten(3,0);
@@ -489,9 +436,8 @@ module led_serial
 		  
     CMD_ADDSHARE_KEY:   
 		begin
-	// Yuan: add shares to key
-		   `keyn_shared_next(1,3,3) = {`keyn(0,0,0) ^ mask[7:4],mask[7:4]};
-		   `keyn_shared_next(1,0,0) = `keyn_shared(1,0,1); 
+	       `keyn_shared_next(1,3,3) = {`keyn(0,0,0) ^ mask[7:4],mask[7:4]};
+	       `keyn_shared_next(1,0,0) = `keyn_shared(1,0,1); 
 	       `keyn_shared_next(1,0,1) = `keyn_shared(1,0,2); 
 	       `keyn_shared_next(1,0,2) = `keyn_shared(1,0,3); 
 	       `keyn_shared_next(1,0,3) = `keyn_shared(1,1,0); 
@@ -506,10 +452,8 @@ module led_serial
 	       `keyn_shared_next(1,3,0) = `keyn_shared(1,3,1); 
 	       `keyn_shared_next(1,3,1) = `keyn_shared(1,3,2); 
 	       `keyn_shared_next(1,3,2) = `keyn_shared(1,3,3); 
-	      // `keyn_shared_next(1,3,3) = `keyn_shared(0,0,0);
-
 		   
-		   `keyn_shared_next(0,0,0) = `keyn_shared(0,0,1); 
+	       `keyn_shared_next(0,0,0) = `keyn_shared(0,0,1); 
 	       `keyn_shared_next(0,0,1) = `keyn_shared(0,0,2); 
 	       `keyn_shared_next(0,0,2) = `keyn_shared(0,0,3); 
 	       `keyn_shared_next(0,0,3) = `keyn_shared(0,1,0); 
@@ -528,7 +472,7 @@ module led_serial
 		   
 	       		   
 		   //4 bit key nipple update
-		   `keyn_next(0,0,0) = `keyn(0,0,1); 
+	       `keyn_next(0,0,0) = `keyn(0,0,1); 
 	       `keyn_next(0,0,1) = `keyn(0,0,2); 
 	       `keyn_next(0,0,2) = `keyn(0,0,3); 
 	       `keyn_next(0,0,3) = `keyn(0,1,0); 
@@ -544,7 +488,6 @@ module led_serial
 	       `keyn_next(0,3,1) = `keyn(0,3,2); 
 	       `keyn_next(0,3,2) = `keyn(0,3,3); 
 	       `keyn_next(0,3,3) = `keyn(1,0,0); 
-		  // `keyn_next(0,3,3) = 4'b0;
 		   
 	       `keyn_next(1,0,0) = `keyn(1,0,1); 
 	       `keyn_next(1,0,1) = `keyn(1,0,2); 
@@ -561,8 +504,7 @@ module led_serial
 	       `keyn_next(1,3,0) = `keyn(1,3,1); 
 	       `keyn_next(1,3,1) = `keyn(1,3,2); 
 	       `keyn_next(1,3,2) = `keyn(1,3,3); 
-	       //`keyn_next(1,3,3) = `keyn(0,0,0);
-		   `keyn_next(1,3,3) = 4'b0;
+	       `keyn_next(1,3,3) = 4'b0;
 	    end   
 	        
 	  CMD_ADDKEY:
@@ -638,13 +580,13 @@ module led_serial
 	       `staten_shared_next(0,1) = `staten_shared(0,2);
 	       `staten_shared_next(0,0) = `staten_shared(0,1);
 	    end
-	//Yuan 
+
 	 CMD_SBOX_CAL:
 		begin //Mo: do nothing here. `staten_shared(0,0) already connect to sbox input.
 			//sbox_input = `staten_shared(0,0);
 		end
 	  
-	//Yuan 
+
 	 CMD_SBOX_SHIFT:
 		begin 
 		   `staten_shared_next(3,3) = sbox_out;
