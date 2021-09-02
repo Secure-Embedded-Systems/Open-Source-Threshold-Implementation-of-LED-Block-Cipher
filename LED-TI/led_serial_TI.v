@@ -152,10 +152,7 @@ module led_serial
    function [7:0] logic_round;
       input [7:0] d;
       input [7:0] k;
-      //logic_round = sbox(d ^ k); 
-	  //Yuan
 	  begin
-	  //$display ("d: %x, k: %x, d^k: %x", d, k, d^k);
 	  logic_round = d ^ k;
 	  end
    endfunction // sbox
